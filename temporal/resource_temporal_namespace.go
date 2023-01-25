@@ -51,7 +51,7 @@ func resourceNamespace() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     3 * 24 * time.Hour,
-				Description: "The Retention Period applies to Closed Workflow Executions",
+				Description: "The Retention Period applies to Closed Workflow Executions (in hours)",
 			},
 		},
 	}
