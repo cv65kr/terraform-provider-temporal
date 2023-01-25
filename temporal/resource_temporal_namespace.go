@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	enumspb "go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/namespace/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/server/common/primitives/timestamp"
@@ -57,15 +58,12 @@ func resourceNamespace() *schema.Resource {
 }
 
 func resourceNamespaceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(Client)
-	namespaceClient, err := client.NamespaceClient()
+	namespaceClient, err := m.(Client).NamespaceClient()
 	if err != nil {
 		return diag.Errorf("Failed to create SDK client: %s", err.Error())
 	}
 
 	ns := d.Get("name").(string)
-	description := d.Get("description").(string)
-	ownerEmail := d.Get("owner_email").(string)
 	archState := enumspb.ARCHIVAL_STATE_DISABLED
 	if d.Get("history_archival_state").(bool) {
 		archState = enumspb.ARCHIVAL_STATE_ENABLED
@@ -78,15 +76,15 @@ func resourceNamespaceCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 	request := &workflowservice.RegisterNamespaceRequest{
 		Namespace:                        ns,
-		Description:                      description,
-		OwnerEmail:                       ownerEmail,
+		Description:                      d.Get("description").(string),
+		OwnerEmail:                       d.Get("owner_email").(string),
 		WorkflowExecutionRetentionPeriod: &retention,
 		HistoryArchivalState:             archState,
 	}
 
 	if err = namespaceClient.Register(ctx, request); err != nil {
 		if _, ok := err.(*serviceerror.NamespaceAlreadyExists); !ok {
-			return diag.Errorf("namespace registration failed: %s", err.Error())
+			return diag.Errorf("Namespace registration failed: %s", err.Error())
 		}
 	}
 
@@ -96,19 +94,88 @@ func resourceNamespaceCreate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceNamespaceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// client := m.(*sdkclient.Client)
+	namespaceClient, err := m.(Client).NamespaceClient()
+	if err != nil {
+		return diag.Errorf("Failed to create SDK client: %s", err.Error())
+	}
+
+	resp, err := namespaceClient.Describe(ctx, d.Id())
+	if _, ok := err.(*serviceerror.NamespaceAlreadyExists); !ok {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("name", resp.NamespaceInfo.Name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("description", resp.NamespaceInfo.Description); err != nil {
+		return diag.FromErr(err)
+	}
+
+	archState := false
+	if resp.Config.HistoryArchivalState == enumspb.ARCHIVAL_STATE_ENABLED {
+		archState = true
+	}
+	if err := d.Set("history_archival_state", archState); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("owner_email", resp.NamespaceInfo.OwnerEmail); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("retention", resp.Config.WorkflowExecutionRetentionTtl.Hours()); err != nil {
+		return diag.FromErr(err)
+	}
 
 	return nil
 }
 
 func resourceNamespaceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// client := m.(*sdkclient.Client)
+	id := d.Id()
+	if id != d.Get("name").(string) {
+		return diag.Errorf("You cannot change the name of namespace")
+	}
+
+	if !d.HasChanges("description", "history_archival_state", "owner_email", "retention") {
+		return nil
+	}
+
+	namespaceClient, err := m.(Client).NamespaceClient()
+	if err != nil {
+		return diag.Errorf("Failed to create SDK client: %s", err.Error())
+	}
+
+	retention, err := timestamp.ParseDurationDefaultDays(d.Get("retention").(string))
+	if err != nil {
+		return diag.Errorf("Invalid format for rention option: %s", err.Error())
+	}
+
+	archState := enumspb.ARCHIVAL_STATE_DISABLED
+	if d.Get("history_archival_state").(bool) {
+		archState = enumspb.ARCHIVAL_STATE_ENABLED
+	}
+
+	request := &workflowservice.UpdateNamespaceRequest{
+		Namespace: id,
+		UpdateInfo: &namespace.UpdateNamespaceInfo{
+			Description: d.Get("description").(string),
+			OwnerEmail:  d.Get("owner_email").(string),
+		},
+		Config: &namespace.NamespaceConfig{
+			WorkflowExecutionRetentionTtl: &retention,
+			HistoryArchivalState:          archState,
+		},
+	}
+
+	if err := namespaceClient.Update(ctx, request); err != nil {
+		return diag.FromErr(err)
+	}
 
 	return nil
 }
 
 func resourceNamespaceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// client := m.(*sdkclient.Client)
-
+	// Not supported by Temporal
 	return nil
 }
