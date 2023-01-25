@@ -3,10 +3,10 @@
 This is a terraform provider for managing your Temporal cluster
 
 ## Currently supported
+- Client with TLS support
 - Namespaces management (without options describe in brackets below)
 
 ## TODO
-- [ ] More client options (TLS, codec ednpoint)
 - [ ] Namespaces (Cluster options, history, visibility)
 - [ ] Search attributes
 - [ ] Schedules
