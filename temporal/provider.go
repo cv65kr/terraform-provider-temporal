@@ -34,8 +34,9 @@ func Provider() *schema.Provider {
 				Description: "Name of the target server that is used for TLS host verification",
 			},
 			"tls_disable_host_verification": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeBool,
 				Optional:    true,
+				Default:     false,
 				Description: "Disable verification of the server certificate (and thus host verification)",
 			},
 		},
