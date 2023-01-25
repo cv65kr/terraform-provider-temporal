@@ -2,6 +2,7 @@ package temporal
 
 import (
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -16,7 +17,7 @@ func TestTemporal_Resource_Namespace(t *testing.T) {
 						name = "test1"
 						description = "Test namespace 1"
 						owner_email = "test@example.com"
-						retention = "240"
+						retention = "17"
 					}
 				`,
 				Check: resource.ComposeTestCheckFunc(
@@ -24,10 +25,14 @@ func TestTemporal_Resource_Namespace(t *testing.T) {
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "name", "test1"),
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "description", "Test namespace 1"),
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "owner_email", "test@example.com"),
-					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "retention", "240"),
+					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "retention", "17"),
 				),
 			},
 			{
+				PreConfig: func() {
+					// Temporal need some time to create namespace
+					time.Sleep(10 * time.Second)
+				},
 				Config: `
 					resource "temporal_namespace" "ns_test1" {
 						name = "test1"
