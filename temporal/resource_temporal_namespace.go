@@ -2,7 +2,7 @@ package temporal
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -50,8 +50,8 @@ func resourceNamespace() *schema.Resource {
 			"retention": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     3 * 24 * time.Hour,
-				Description: "The Retention Period applies to Closed Workflow Executions (in hours)",
+				Default:     30,
+				Description: "The Retention Period applies to Closed Workflow Executions (in days)",
 			},
 		},
 	}
@@ -100,7 +100,7 @@ func resourceNamespaceRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	resp, err := namespaceClient.Describe(ctx, d.Id())
-	if _, ok := err.(*serviceerror.NamespaceAlreadyExists); !ok {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -124,7 +124,8 @@ func resourceNamespaceRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("retention", resp.Config.WorkflowExecutionRetentionTtl.Hours()); err != nil {
+	retentionDays := fmt.Sprintf("%v", resp.Config.WorkflowExecutionRetentionTtl.Hours()/24)
+	if err := d.Set("retention", retentionDays); err != nil {
 		return diag.FromErr(err)
 	}
 
