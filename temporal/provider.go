@@ -10,7 +10,7 @@ func Provider() *schema.Provider {
 			"address": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "localhost:7233",
+				Default:     "127.0.0.1:7233",
 				Description: "Host and port for the Temporal Frontend Service",
 			},
 		},

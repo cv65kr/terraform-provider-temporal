@@ -10,7 +10,6 @@ This is a terraform provider for managing your Temporal cluster
 - [ ] Namespaces (Cluster options, history, visibility)
 - [ ] Search attributes
 - [ ] Schedules
-- [ ] CI
 - [ ] Send first version to Terraform registry
 
 ## How to use

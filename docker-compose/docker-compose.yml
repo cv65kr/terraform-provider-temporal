@@ -16,15 +16,14 @@ services:
       - DB_PORT=3306
       - MYSQL_USER=root
       - MYSQL_PWD=root
-      - MYSQL_SEEDS=temporal
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - MYSQL_SEEDS=mysql
+      - DYNAMIC_CONFIG_FILE_PATH=/etc/temporal/config/development-sql.yaml
     ports:
       - 7233:7233
     volumes:
       - ./development-sql.yaml:/etc/temporal/config/development-sql.yaml
 
   temporal-admin-tools:
-    container_name: temporal-admin-tools
     image: temporalio/admin-tools:1.18.0
     depends_on:
       - temporal
