@@ -13,6 +13,32 @@ func Provider() *schema.Provider {
 				Default:     "127.0.0.1:7233",
 				Description: "Host and port for the Temporal Frontend Service",
 			},
+			"tls_ca_path": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Path to a server Certificate Authority (CA) certificate file",
+			},
+			"tls_cert_path": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Path to a public X.509 certificate file for mutual TLS authentication",
+			},
+			"tls_key_path": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Path to a private key file for mutual TLS authentication",
+			},
+			"tls_server_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Name of the target server that is used for TLS host verification",
+			},
+			"tls_disable_host_verification": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Disable verification of the server certificate (and thus host verification)",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"temporal_namespace": resourceNamespace(),
