@@ -16,8 +16,14 @@ func TestTemporal_Resource_Namespace(t *testing.T) {
 					resource "temporal_namespace" "ns_test1" {
 						name = "test1"
 						description = "Test namespace 1"
+						clusters = ["active"]
 						owner_email = "test@example.com"
 						retention = "17"
+
+						namespace_data = {
+							"k1": "v1",
+							"k2": "v2"
+						}
 					}
 				`,
 				Check: resource.ComposeTestCheckFunc(
@@ -25,7 +31,8 @@ func TestTemporal_Resource_Namespace(t *testing.T) {
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "name", "test1"),
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "description", "Test namespace 1"),
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "owner_email", "test@example.com"),
-					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "retention", "17"),
+					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "namespace_data.k1", "v1"),
+					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "namespace_data.k2", "v2"),
 				),
 			},
 			{
@@ -38,7 +45,14 @@ func TestTemporal_Resource_Namespace(t *testing.T) {
 						name = "test1"
 						description = "Test namespace 1 with small change"
 						owner_email = "test2@example.com"
+						clusters = ["active"]
 						retention = "10"
+
+						namespace_data = {
+							"k1": "v1",
+							"k2": "v3",
+							"k4": "v4"
+						}
 					}
 				`,
 				Check: resource.ComposeTestCheckFunc(
@@ -47,6 +61,9 @@ func TestTemporal_Resource_Namespace(t *testing.T) {
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "description", "Test namespace 1 with small change"),
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "owner_email", "test2@example.com"),
 					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "retention", "10"),
+					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "namespace_data.k1", "v1"),
+					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "namespace_data.k2", "v3"),
+					resource.TestCheckResourceAttr("temporal_namespace.ns_test1", "namespace_data.k4", "v4"),
 				),
 			},
 		},
